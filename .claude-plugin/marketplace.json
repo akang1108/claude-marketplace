@@ -1,8 +1,8 @@
 {
   "$schema": "https://code.claude.com/schemas/marketplace.json",
   "version": "1.0.0",
-  "name": "claude-marketplace",
-  "description": "Andy Kang's personal Claude Code plugins for Gemini media generation",
+  "name": "akang1108-claude-marketplace",
+  "description": "akang1108 personal Claude Code plugins for Gemini media generation and app naming",
   "owner": {
     "name": "Andy Kang"
   },

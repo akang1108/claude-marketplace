@@ -8,7 +8,7 @@ Add this marketplace and install the plugin:
 
 ```bash
 /plugin marketplace add akang1108/claude-marketplace
-/plugin install gemini-image@claude-marketplace
+/plugin install gemini-image@akang1108-claude-marketplace
 ```
 
 ## Skills

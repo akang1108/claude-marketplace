@@ -8,7 +8,7 @@ Add this marketplace and install the plugin:
 
 ```bash
 /plugin marketplace add akang1108/claude-marketplace
-/plugin install gemini-video@claude-marketplace
+/plugin install gemini-video@akang1108-claude-marketplace
 ```
 
 ## Skills

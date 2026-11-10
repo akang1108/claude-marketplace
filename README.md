@@ -13,7 +13,7 @@ Add the marketplace from the Claude Code prompt:
 Then install individual plugins:
 
 ```bash
-/plugin install gemini-image@claude-marketplace
+/plugin install gemini-image@akang1108-claude-marketplace
 ```
 
 You may need to restart Claude for skills to be autodetected.

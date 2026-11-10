@@ -6,7 +6,7 @@ Brainstorm app/product names and vet candidates for availability.
 
 ```bash
 /plugin marketplace add akang1108/claude-marketplace
-/plugin install app-naming@claude-marketplace
+/plugin install app-naming@akang1108-claude-marketplace
 ```
 
 ## Skills
