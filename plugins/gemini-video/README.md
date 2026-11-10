@@ -1,6 +1,6 @@
 # gemini-video
 
-Generate short video clips from text prompts or images using Google Gemini's Veo model.
+Generate short video clips from text prompts or images using Google Gemini's Omni video model.
 
 ## Setup
 
@@ -10,6 +10,11 @@ Add this marketplace and install the plugin:
 /plugin marketplace add akang1108/claude-marketplace
 /plugin install gemini-video@akang1108-claude-marketplace
 ```
+
+## Requirements
+
+- [`uv`](https://docs.astral.sh/uv/) installed
+- `GEMINI_API_KEY` set
 
 ## Skills
 

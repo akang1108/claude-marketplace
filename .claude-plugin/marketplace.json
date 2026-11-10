@@ -9,12 +9,12 @@
   "plugins": [
     {
       "name": "gemini-image",
-      "description": "Generate images, analyze images, or produce captions using Google Gemini's Imagen model.",
+      "description": "Generate images, analyze images, or produce captions using Google Gemini's Nano Banana image models.",
       "source": "./plugins/gemini-image"
     },
     {
       "name": "gemini-video",
-      "description": "Generate short video clips from text prompts or images using Google Gemini's Veo model.",
+      "description": "Generate short video clips from text prompts or images using Google Gemini's Omni video model.",
       "source": "./plugins/gemini-video"
     },
     {

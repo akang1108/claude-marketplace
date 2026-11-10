@@ -32,10 +32,10 @@ You may need to restart Claude for skills to be autodetected.
 
 ## Available Plugins
 
-| Name                                            | Description                                        |
-|--------------------------------------------------|-----------------------------------------------------|
-| [gemini-image](plugins/gemini-image/README.md) | Generate/analyze/caption images via Google Gemini  |
-| [gemini-video](plugins/gemini-video/README.md) | Generate short video clips via Google Gemini Veo   |
+| Name                                           | Description                                         |
+|------------------------------------------------|-----------------------------------------------------|
+| [gemini-image](plugins/gemini-image/README.md) | Generate/analyze/caption images via Google Gemini   |
+| [gemini-video](plugins/gemini-video/README.md) | Generate short video clips via Google Gemini Omni   |
 | [app-naming](plugins/app-naming/README.md)     | Brainstorm and vet app names (whois, App Store, TM) |
 
 ---

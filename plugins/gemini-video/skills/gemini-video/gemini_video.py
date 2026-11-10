@@ -1,22 +1,26 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.10"
+# dependencies = ["google-genai"]
+# ///
 import argparse
+import base64
 import json
 import os
 import re
 import shutil
 import subprocess
 import sys
-import time
 from pathlib import Path
 
 from google import genai
-from google.genai import types
 
-TIER_MODELS = {
-    "lite": "veo-3.1-lite-generate-preview",
-    "fast": "veo-3.1-fast-generate-preview",
-    "standard": "veo-3.1-generate-preview",
-}
+# Veo is shut down; video generation now goes through the Interactions API on Omni models.
+# Newest first: a model can be listed but 404 on the Interactions endpoint while it rolls out.
+MODELS = ("gemini-omni-1.2-flash", "gemini-omni-1.1-flash", "gemini-omni-flash-preview")
+MIN_DURATION, MAX_DURATION = 3, 15
+MAX_IMAGES = 6
+REQUEST_TIMEOUT_SECONDS = 600
 
 
 def slugify(text: str, max_len: int = 60) -> str:
@@ -47,11 +51,18 @@ def get_api_key() -> str:
     return key
 
 
-def load_image(image_path: str) -> types.Image:
-    image_bytes = Path(image_path).read_bytes()
+def image_part(image_path: str) -> dict:
     ext = Path(image_path).suffix.lower()
-    mime = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png"}.get(ext, "image/jpeg")
-    return types.Image(image_bytes=image_bytes, mime_type=mime)
+    mime = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp"}.get(ext, "image/jpeg")
+    data = base64.b64encode(Path(image_path).read_bytes()).decode()
+    return {"type": "image", "data": data, "mime_type": mime}
+
+
+def validate_duration(seconds: int) -> str:
+    if not MIN_DURATION <= seconds <= MAX_DURATION:
+        print(f"Error: --duration must be between {MIN_DURATION} and {MAX_DURATION} seconds.", file=sys.stderr)
+        sys.exit(1)
+    return f"{seconds}s"
 
 
 def probe_video(path: Path) -> dict:
@@ -79,58 +90,58 @@ def probe_video(path: Path) -> dict:
     return info
 
 
-def generate_video(prompt: str, image_path: str | None, reference_path: str | None, output: str | None, duration: int | None = None, tier: str = "lite") -> Path:
+def generate_video(
+    prompt: str,
+    image_paths: list[str],
+    output: str | None,
+    duration: int | None = None,
+    resolution: str | None = None,
+    aspect_ratio: str | None = None,
+) -> Path:
     print(f"Prompt: {prompt}")
-    model = TIER_MODELS[tier]
-    print(f"Tier: {tier} ({model})")
+
+    response_format: dict = {"type": "video"}
+    if duration:
+        response_format["duration"] = validate_duration(duration)
+    if resolution:
+        response_format["resolution"] = resolution
+    if aspect_ratio:
+        response_format["aspect_ratio"] = aspect_ratio
+
+    if image_paths:
+        print(f"Mode: image-guided ({len(image_paths)} image(s))")
+        contents = [image_part(p) for p in image_paths] + [{"type": "text", "text": prompt}]
+    else:
+        contents = prompt
+
     client = genai.Client(api_key=get_api_key())
+    print("Generating (can take a minute or more)...", flush=True)
+    interaction, model = None, None
+    for model in MODELS:
+        try:
+            interaction = client.interactions.create(
+                model=model,
+                input=contents,
+                response_format=response_format,
+                timeout=REQUEST_TIMEOUT_SECONDS,
+            )
+            break
+        except Exception as e:
+            if getattr(e, "status_code", None) != 404 or model == MODELS[-1]:
+                raise
+            print(f"{model} not available, trying next model...", flush=True)
 
-    kwargs: dict = {"model": model, "prompt": prompt}
-    if reference_path:
-        print("Mode: subject reference (--reference)")
-        kwargs["config"] = types.GenerateVideosConfig(
-            reference_images=[
-                types.VideoGenerationReferenceImage(
-                    image=load_image(reference_path),
-                    reference_type=types.VideoGenerationReferenceType.ASSET,
-                )
-            ],
-            person_generation="allow_adult",
-            duration_seconds=duration,
-        )
-    elif image_path:
-        print("Mode: image-to-video frame 0 (--image)")
-        kwargs["image"] = load_image(image_path)
-        if duration:
-            kwargs["config"] = types.GenerateVideosConfig(duration_seconds=duration)
-
-    operation = client.models.generate_videos(**kwargs)
-
-    start = time.time()
-    while not operation.done:
-        elapsed = int(time.time() - start)
-        print(f"Generating... {elapsed}s elapsed", flush=True)
-        time.sleep(10)
-        operation = client.operations.get(operation)
-
-    video = operation.response.generated_videos[0].video
+    video = interaction.output_video
+    if video is None or not video.data:
+        print("Error: no video data in response", file=sys.stderr)
+        sys.exit(1)
 
     if output:
         out_path = Path(output)
     else:
         stem = slugify(prompt)
         out_path = unique_path(str(Path.cwd() / stem), ".mp4")
-
-    if video.video_bytes:
-        out_path.write_bytes(video.video_bytes)
-    elif video.uri:
-        import urllib.request
-        api_key = get_api_key()
-        url = video.uri if "key=" in video.uri else f"{video.uri}&key={api_key}"
-        urllib.request.urlretrieve(url, out_path)
-    else:
-        print("Error: no video data in response", file=sys.stderr)
-        sys.exit(1)
+    out_path.write_bytes(base64.b64decode(video.data))
 
     filesize = out_path.stat().st_size
     info = probe_video(out_path)
@@ -145,18 +156,25 @@ def generate_video(prompt: str, image_path: str | None, reference_path: str | No
 def main():
     parser = argparse.ArgumentParser(description="Gemini video generation tool")
     parser.add_argument("--prompt", required=True, help="Text prompt describing the video")
-    parser.add_argument("--image", help="Image used as frame 0 (image-to-video)")
-    parser.add_argument("--reference", help="Image used as subject reference (ASSET mode)")
-    parser.add_argument("--duration", type=int, help="Clip duration in seconds (e.g. 5)")
+    parser.add_argument("--image", action="append", default=[], help=f"Reference image to guide the video (repeatable, up to {MAX_IMAGES})")
+    parser.add_argument("--duration", type=int, help=f"Clip duration in seconds ({MIN_DURATION}-{MAX_DURATION}, default 10)")
+    parser.add_argument("--resolution", choices=["360p", "720p", "1080p", "4k"], help="Output resolution (default 720p)")
+    parser.add_argument("--aspect-ratio", choices=["16:9", "9:16"], help="Aspect ratio (default 16:9)")
     parser.add_argument("--output", help="Output filename (overrides auto-generated name)")
-    parser.add_argument("--tier", choices=list(TIER_MODELS), default="lite", help="Veo quality tier: lite (default), fast, standard")
     args = parser.parse_args()
 
-    if args.image and args.reference:
-        print("Error: --image and --reference are mutually exclusive.", file=sys.stderr)
+    if len(args.image) > MAX_IMAGES:
+        print(f"Error: at most {MAX_IMAGES} --image values are supported.", file=sys.stderr)
         sys.exit(1)
 
-    generate_video(prompt=args.prompt, image_path=args.image, reference_path=args.reference, output=args.output, duration=args.duration, tier=args.tier)
+    generate_video(
+        prompt=args.prompt,
+        image_paths=args.image,
+        output=args.output,
+        duration=args.duration,
+        resolution=args.resolution,
+        aspect_ratio=args.aspect_ratio,
+    )
 
 
 if __name__ == "__main__":

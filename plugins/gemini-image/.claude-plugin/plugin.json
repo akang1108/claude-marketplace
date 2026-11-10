@@ -1,6 +1,6 @@
 {
   "name": "gemini-image",
-  "description": "Generate images, analyze images, or produce captions using Google Gemini's Imagen model.",
+  "description": "Generate images, analyze images, or produce captions using Google Gemini's Nano Banana image models.",
   "description_for_model": "When the user types /gemini-image, asks to generate an image, or wants to analyze/describe a photo with AI, invoke the gemini-image skill.",
   "version": "1.0.0",
   "author": {
