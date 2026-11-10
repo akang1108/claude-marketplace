@@ -1,0 +1,26 @@
+{
+  "$schema": "https://code.claude.com/schemas/marketplace.json",
+  "version": "1.0.0",
+  "name": "claude-marketplace",
+  "description": "Andy Kang's personal Claude Code plugins for Gemini media generation",
+  "owner": {
+    "name": "Andy Kang"
+  },
+  "plugins": [
+    {
+      "name": "gemini-image",
+      "description": "Generate images, analyze images, or produce captions using Google Gemini's Imagen model.",
+      "source": "./plugins/gemini-image"
+    },
+    {
+      "name": "gemini-video",
+      "description": "Generate short video clips from text prompts or images using Google Gemini's Veo model.",
+      "source": "./plugins/gemini-video"
+    },
+    {
+      "name": "app-naming",
+      "description": "Brainstorm and vet app/product names: domains via whois, App Store, trademarks, company registries.",
+      "source": "./plugins/app-naming"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "name": "app-naming",
+  "description": "Brainstorm and vet app/product names: domains via whois, App Store, trademarks, company registries.",
+  "description_for_model": "When the user asks to check, vet, or brainstorm an app/product name, or asks whether a name is taken, invoke the app-naming skill.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Andy Kang"
+  },
+  "triggers": {
+    "keywords": [
+      "/app-naming",
+      "is this name taken",
+      "check this name",
+      "name availability",
+      "brainstorm names",
+      "look up the name"
+    ],
+    "context": [
+      "When the user proposes a candidate name for an app, product, or company and wants it checked",
+      "When the user wants name ideas for a new app"
+    ]
+  }
+}

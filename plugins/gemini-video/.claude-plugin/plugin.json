@@ -1,0 +1,21 @@
+{
+  "name": "gemini-video",
+  "description": "Generate short video clips from text prompts or images using Google Gemini's Veo model.",
+  "description_for_model": "When the user types /gemini-video, asks to generate a video, or wants to animate an image with AI, invoke the gemini-video skill.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Andy Kang"
+  },
+  "triggers": {
+    "keywords": [
+      "/gemini-video",
+      "generate a video",
+      "animate an image",
+      "AI video clip"
+    ],
+    "context": [
+      "When the user asks to generate a short video clip from text",
+      "When the user wants an existing image animated"
+    ]
+  }
+}
