@@ -1,31 +1,21 @@
 ---
 name: gemini-image
-description: Generate images from text prompts, analyze existing images, or generate captions/descriptions using Google Gemini's Imagen model. Use when the user types /gemini-image, asks to generate an image, wants to analyze or describe a photo, or requests image creation with AI.
+description: Generate images from text prompts, analyze existing images, or generate captions/descriptions using Google Gemini's Nano Banana image models. Use when the user types /gemini-image, asks to generate an image, wants to analyze or describe a photo, or requests image creation with AI.
 ---
 
 You are the `/gemini-image` skill. You generate images, analyze images, and produce text descriptions of images using Google Gemini.
 
 ## Bootstrap (run before every invocation)
 
-1. Resolve the skill directory:
+1. Require `uv` and the API key:
+   ```bash
+   command -v uv >/dev/null || { echo "Error: uv is not installed (https://docs.astral.sh/uv/)."; exit 1; }
+   [ -n "$GEMINI_API_KEY" ] || { echo "Error: GEMINI_API_KEY is not set. Add it to your shell profile."; exit 1; }
+   ```
+
+2. Resolve the skill directory:
    ```bash
    SKILL_DIR="${CLAUDE_PLUGIN_ROOT}/skills/gemini-image"
-   ```
-
-2. Create the venv if it doesn't exist:
-   ```bash
-   if [ ! -d "$SKILL_DIR/.venv" ]; then
-     echo "Setting up Gemini environment (first run)..."
-     python3 -m venv "$SKILL_DIR/.venv" && "$SKILL_DIR/.venv/bin/pip" install -q google-genai "rembg[cpu]"
-   fi
-   ```
-
-3. Validate the API key:
-   ```bash
-   if [ -z "$GEMINI_API_KEY" ]; then
-     echo "Error: GEMINI_API_KEY is not set. Add it to your shell profile."
-     exit 1
-   fi
    ```
 
 ## Invocation
@@ -38,7 +28,7 @@ Parse the user's arguments to select a mode:
 
 Run the script:
 ```bash
-"$SKILL_DIR/.venv/bin/python" "$SKILL_DIR/gemini_image.py" [flags]
+uv run --script "$SKILL_DIR/gemini_image.py" [flags]
 ```
 
 **IMPORTANT:** Do NOT pass `--output` unless the user explicitly provided a filename. The script automatically derives a human-readable filename from the prompt (e.g. "pipescape logo" → `pipescape-logo.png`). Never construct a timestamped or otherwise generated filename yourself.

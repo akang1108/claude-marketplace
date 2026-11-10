@@ -1,6 +1,6 @@
 # gemini-image
 
-Generate images, analyze images, or produce captions using Google Gemini's Imagen model.
+Generate images, analyze images, or produce captions using Google Gemini's Nano Banana image models.
 
 ## Setup
 
@@ -10,6 +10,11 @@ Add this marketplace and install the plugin:
 /plugin marketplace add akang1108/claude-marketplace
 /plugin install gemini-image@akang1108-claude-marketplace
 ```
+
+## Requirements
+
+- [`uv`](https://docs.astral.sh/uv/) installed
+- `GEMINI_API_KEY` set
 
 ## Skills
 

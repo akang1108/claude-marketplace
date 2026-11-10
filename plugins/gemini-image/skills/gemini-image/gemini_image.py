@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.10"
+# dependencies = ["google-genai", "rembg[cpu]"]
+# ///
 import argparse
 import io
 import os
@@ -8,6 +12,10 @@ from pathlib import Path
 
 from google import genai
 from google.genai import types
+
+# Imagen is shut down; image generation now goes through generate_content on Nano Banana models.
+IMAGE_MODEL = "gemini-nano-banana-2.1"
+TEXT_MODEL = "gemini-3.8-flash"
 
 # Keywords that signal the user wants a transparent background
 _TRANSPARENT_KEYWORDS = [
@@ -43,16 +51,7 @@ def _strip_transparent_phrases(prompt: str) -> str:
 
 
 def _remove_background(image_bytes: bytes) -> bytes:
-    try:
-        from rembg import remove
-    except ImportError:
-        print("[transparent] Installing rembg...", flush=True)
-        import subprocess
-        subprocess.check_call(
-            [sys.executable, "-m", "pip", "install", "-q", "rembg[gpu]"],
-            stdout=subprocess.DEVNULL,
-        )
-        from rembg import remove
+    from rembg import remove
 
     print("[transparent] Removing background...", flush=True)
     result = remove(image_bytes)
@@ -87,6 +86,14 @@ def get_api_key() -> str:
     return key
 
 
+def _extract_image_bytes(response) -> bytes:
+    for part in response.parts or []:
+        if part.inline_data is not None and part.inline_data.data:
+            return part.inline_data.data
+    text = " ".join(p.text for p in response.parts or [] if p.text)
+    raise RuntimeError(f"Model returned no image. {text}".strip())
+
+
 def generate_image(prompt: str, output: str | None) -> Path:
     print(f"Prompt: {prompt}")
     transparent = _wants_transparent(prompt)
@@ -103,12 +110,12 @@ def generate_image(prompt: str, output: str | None) -> Path:
         gen_prompt = prompt
 
     client = genai.Client(api_key=get_api_key())
-    response = client.models.generate_images(
-        model="imagen-4.0-generate-001",
-        prompt=gen_prompt,
-        config=types.GenerateImagesConfig(number_of_images=1),
+    response = client.models.generate_content(
+        model=IMAGE_MODEL,
+        contents=gen_prompt,
+        config=types.GenerateContentConfig(response_modalities=["TEXT", "IMAGE"]),
     )
-    image_bytes = response.generated_images[0].image.image_bytes
+    image_bytes = _extract_image_bytes(response)
 
     if transparent:
         image_bytes = _remove_background(image_bytes)
@@ -134,7 +141,7 @@ def analyze_image(file: str, question: str) -> None:
     client = genai.Client(api_key=get_api_key())
     image_bytes = Path(file).read_bytes()
     response = client.models.generate_content(
-        model="gemini-2.5-flash",
+        model=TEXT_MODEL,
         contents=[
             question,
             types.Part.from_bytes(data=image_bytes, mime_type=_mime_type(file)),
@@ -148,7 +155,7 @@ def describe_image(file: str, prompt: str) -> None:
     client = genai.Client(api_key=get_api_key())
     image_bytes = Path(file).read_bytes()
     response = client.models.generate_content(
-        model="gemini-2.5-flash",
+        model=TEXT_MODEL,
         contents=[
             prompt,
             types.Part.from_bytes(data=image_bytes, mime_type=_mime_type(file)),

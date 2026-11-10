@@ -59,16 +59,15 @@ def test_generate_image_saves_file(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("GEMINI_API_KEY", "fake-key")
 
-    fake_image = MagicMock()
-    fake_image.image.image_bytes = b"\x89PNG fake image bytes"
-
+    fake_part = MagicMock()
+    fake_part.inline_data.data = b"\x89PNG fake image bytes"
     fake_response = MagicMock()
-    fake_response.generated_images = [fake_image]
+    fake_response.parts = [fake_part]
 
     with patch("gemini_image.genai") as mock_genai:
         mock_client = MagicMock()
         mock_genai.Client.return_value = mock_client
-        mock_client.models.generate_images.return_value = fake_response
+        mock_client.models.generate_content.return_value = fake_response
 
         result = generate_image("a red fox in snow", output=None)
 
@@ -80,15 +79,15 @@ def test_generate_image_uses_output_flag(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("GEMINI_API_KEY", "fake-key")
 
-    fake_image = MagicMock()
-    fake_image.image.image_bytes = b"PNG bytes"
+    fake_part = MagicMock()
+    fake_part.inline_data.data = b"PNG bytes"
     fake_response = MagicMock()
-    fake_response.generated_images = [fake_image]
+    fake_response.parts = [fake_part]
 
     with patch("gemini_image.genai") as mock_genai:
         mock_client = MagicMock()
         mock_genai.Client.return_value = mock_client
-        mock_client.models.generate_images.return_value = fake_response
+        mock_client.models.generate_content.return_value = fake_response
 
         result = generate_image("a red fox in snow", output=str(tmp_path / "custom.png"))
 
@@ -137,15 +136,15 @@ def test_main_dispatches_generate(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("GEMINI_API_KEY", "fake-key")
 
-    fake_image = MagicMock()
-    fake_image.image.image_bytes = b"PNG"
+    fake_part = MagicMock()
+    fake_part.inline_data.data = b"PNG"
     fake_response = MagicMock()
-    fake_response.generated_images = [fake_image]
+    fake_response.parts = [fake_part]
 
     with patch("gemini_image.genai") as mock_genai:
         mock_client = MagicMock()
         mock_genai.Client.return_value = mock_client
-        mock_client.models.generate_images.return_value = fake_response
+        mock_client.models.generate_content.return_value = fake_response
 
         with patch("sys.argv", ["gemini_image.py", "--mode", "generate", "--prompt", "a fox"]):
             main()
